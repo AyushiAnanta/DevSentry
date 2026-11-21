@@ -1,0 +1,1 @@
+module.exports={preset:'ts-jest',testEnvironment:'node',testTimeout:120000,roots:['<rootDir>/tests'],collectCoverage:true,collectCoverageFrom:['src/**/*.ts','!src/server.ts','!src/config/passport.ts'],coverageReporters:['text','lcov']};
