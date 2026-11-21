@@ -1,0 +1,7 @@
+import { NextFunction,Request,Response } from 'express';
+import * as service from '../services/projectService';
+export async function list(_req:Request,res:Response,next:NextFunction):Promise<void>{try{res.json(await service.listProjects(_req.user!.id));}catch(e){next(e);}}
+export async function create(req:Request,res:Response,next:NextFunction):Promise<void>{try{res.status(201).json(await service.createProject(req.user!.id,req.body as {name:string;url:string}));}catch(e){next(e);}}
+export async function get(req:Request,res:Response,next:NextFunction):Promise<void>{try{const value=await service.getProject(req.user!.id,String(req.params.id));if(!value){res.status(404).json({error:{code:'NOT_FOUND',message:'Project not found'}});return;}res.json(value);}catch(e){next(e);}}
+export async function update(req:Request,res:Response,next:NextFunction):Promise<void>{try{const value=await service.updateProject(req.user!.id,String(req.params.id),req.body as {name?:string;url?:string});if(!value){res.status(404).json({error:{code:'NOT_FOUND',message:'Project not found'}});return;}res.json(value);}catch(e){next(e);}}
+export async function remove(req:Request,res:Response,next:NextFunction):Promise<void>{try{if(!await service.deleteProject(req.user!.id,String(req.params.id))){res.status(404).json({error:{code:'NOT_FOUND',message:'Project not found'}});return;}res.status(204).end();}catch(e){next(e);}}
