@@ -268,3 +268,9 @@ cd client && npm test      # component tests
 
 ## License
 MIT (or as required by your university)
+
+## Phase 1 status
+
+Phase 1 provides Google OAuth cookie-auth scaffolding, owner-scoped project CRUD, health and analysis stub routes, Swagger UI, MongoDB models, a React dashboard and project workspace, form validation, and automated API/UI tests. Repository scanning, static analysis, git metrics, and LLM explanations are deferred to Phase 2. Configure `server/.env` and `client/.env` from their `.env.example` files and ensure MongoDB is running.
+
+Run the API in one terminal with `cd server && npm install && npm run dev`; run the UI in another with `cd client && npm install && npm run dev`. Validate with `cd server && npm run typecheck && npm run lint && npm test -- --coverage`, then `cd client && npm run typecheck && npm run lint && npm test && npm run build`. The API listens on port 5000 and the Vite client on port 5173 by default.
