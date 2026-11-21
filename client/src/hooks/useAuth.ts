@@ -1,0 +1,2 @@
+import { useEffect } from 'react';import { useQuery,useQueryClient } from '@tanstack/react-query';import { getMe } from '../api/auth';
+export function useAuth(){const queryClient=useQueryClient();useEffect(()=>{const expire=()=>queryClient.setQueryData(['auth'],null);window.addEventListener('auth-expired',expire);return()=>window.removeEventListener('auth-expired',expire);},[queryClient]);return useQuery({queryKey:['auth'],queryFn:getMe,retry:false});}
