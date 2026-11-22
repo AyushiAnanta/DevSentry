@@ -1,0 +1,3 @@
+5,1,38,2,5,"Buggy::loadUser@6-10@server/tests/fixtures/Buggy.java","server/tests/fixtures/Buggy.java","Buggy::loadUser","Buggy::loadUser( Connection connection , String userId)",6,10
+3,1,19,2,3,"Buggy::average@12-14@server/tests/fixtures/Buggy.java","server/tests/fixtures/Buggy.java","Buggy::average","Buggy::average( int total , int count)",12,14
+3,1,12,1,3,"Buggy::isAdmin@16-18@server/tests/fixtures/Buggy.java","server/tests/fixtures/Buggy.java","Buggy::isAdmin","Buggy::isAdmin( String role)",16,18

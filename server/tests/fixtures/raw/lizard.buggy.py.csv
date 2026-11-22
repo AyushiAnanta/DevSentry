@@ -1,0 +1,3 @@
+3,1,31,2,3,"get_user@4-6@server/tests/fixtures/buggy.py","server/tests/fixtures/buggy.py","get_user","get_user( connection : sqlite3 . Connection , user_id : str )",4,6
+2,1,26,1,2,"calculate_average@9-10@server/tests/fixtures/buggy.py","server/tests/fixtures/buggy.py","calculate_average","calculate_average( values : list [ int ] )",9,10
+2,1,12,1,2,"run_expression@13-14@server/tests/fixtures/buggy.py","server/tests/fixtures/buggy.py","run_expression","run_expression( expression : str )",13,14

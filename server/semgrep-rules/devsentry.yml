@@ -1,0 +1,109 @@
+rules:
+  - id: devsentry.sql-string-concat
+    message: SQL is assembled with string concatenation; use parameterized queries.
+    severity: ERROR
+    languages: [javascript, typescript, python]
+    mode: taint
+    pattern-sources:
+      - pattern: $SQL = $A + $B
+        focus-metavariable: $SQL
+    pattern-sinks:
+      - pattern: $DB.query($SQL)
+        focus-metavariable: $SQL
+      - pattern: $DB.execute($SQL)
+        focus-metavariable: $SQL
+  - id: devsentry.sql-string-concat-java
+    message: SQL is assembled with string concatenation; use a PreparedStatement.
+    severity: ERROR
+    languages: [java]
+    mode: taint
+    pattern-sources:
+      - pattern: $SQL = $A + $B
+        focus-metavariable: $SQL
+    pattern-sinks:
+      - pattern: $STMT.executeQuery($SQL)
+        focus-metavariable: $SQL
+  - id: devsentry.command-string-concat
+    message: A shell command is assembled with concatenated input; avoid shell execution.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: exec($A + $B)
+      - pattern: execSync($A + $B)
+  - id: devsentry.command-string-concat-python
+    message: A shell command is assembled with concatenated input; avoid shell execution.
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: os.system($A + $B)
+      - pattern: subprocess.$FUNC($A + $B, ...)
+  - id: devsentry.command-string-concat-java
+    message: A process command is assembled with concatenated input; avoid command shells.
+    severity: ERROR
+    languages: [java]
+    pattern: Runtime.getRuntime().exec($A + $B)
+  - id: devsentry.dynamic-eval
+    message: Dynamic evaluation can execute untrusted code.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: eval(...)
+  - id: devsentry.dynamic-eval-python
+    message: Dynamic evaluation can execute untrusted code.
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+  - id: devsentry.hardcoded-secret
+    message: A password or secret is hardcoded in a string literal.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $NAME = "$VALUE"
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(password|passwd|secret|token|api[_-]?key).*
+  - id: devsentry.hardcoded-secret-python
+    message: A password or secret is hardcoded in a string literal.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $NAME = "$VALUE"
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(password|passwd|secret|token|api[_-]?key).*
+  - id: devsentry.hardcoded-secret-java
+    message: A password or secret is hardcoded in a string literal.
+    severity: ERROR
+    languages: [java]
+    patterns:
+      - pattern: String $NAME = "$VALUE";
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(password|passwd|secret|token|api[_-]?key).*
+  - id: devsentry.empty-catch
+    message: This catch block swallows an error; handle, report, or rethrow it.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: catch ($ERROR) { }
+      - pattern: catch ($ERROR) { void $ERROR; }
+  - id: devsentry.empty-catch-java
+    message: This catch block hides an error; handle or report the exception.
+    severity: WARNING
+    languages: [java]
+    pattern: catch ($TYPE $ERROR) { }
+  - id: devsentry.loose-equality
+    message: Use strict equality to avoid implicit type coercion.
+    severity: INFO
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $LEFT == $RIGHT
+      - pattern-not: $LEFT === $RIGHT
+  - id: devsentry.java-string-reference-equality
+    message: Use String.equals() instead of comparing Java strings with ==.
+    severity: INFO
+    languages: [java]
+    pattern-either:
+      - pattern: '$LEFT == "$VALUE"'
+      - pattern: '"$VALUE" == $RIGHT'

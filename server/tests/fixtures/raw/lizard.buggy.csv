@@ -1,0 +1,6 @@
+6,2,49,2,6,"loadUser@3-8@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","loadUser","loadUser ( db ( sql : string ) , userId )",3,8
+3,1,18,1,3,"runTask@10-12@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","runTask","runTask ( command )",10,12
+3,1,14,1,3,"isAdmin@14-16@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","isAdmin","isAdmin ( role )",14,16
+1,1,4,2,1,"(anonymous)@21-21@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","(anonymous)","(anonymous)",21,21
+3,1,34,1,3,"average@20-22@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","average","average ( values )",20,22
+3,1,15,1,3,"evaluate@24-26@server/tests/fixtures/buggy.ts","server/tests/fixtures/buggy.ts","evaluate","evaluate ( expression )",24,26
