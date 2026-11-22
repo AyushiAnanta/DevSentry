@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as controller from '../controllers/projectController';
+import { startScan } from '../controllers/scanController';
 import { requireAuth } from '../middleware/requireAuth';
 import { validateBody } from '../middleware/validate';
-const github=z.string().url().refine(value=>/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(value),'Must be a public GitHub repository URL');
+import { parseGithubUrl } from '../services/repoService';
+const github=z.string().url().refine(value=>{try{parseGithubUrl(value);return true;}catch{return false;}},'Must be a public GitHub repository URL');
 const createSchema=z.object({name:z.string().trim().min(1).max(100),url:github});
 const patchSchema=z.object({name:z.string().trim().min(1).max(100).optional(),url:github.optional()}).refine(v=>Object.keys(v).length>0);
 export const projectRouter=Router();
@@ -52,9 +54,12 @@ projectRouter.delete('/:id',controller.remove);
 /** @openapi
  * /api/projects/{id}/scans:
  *   post:
- *     summary: Start repository scan (Phase 2)
+ *     summary: Queue an analysis scan for an owned project
  *     security: [{ cookieAuth: [] }]
  *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
- *     responses: { '501': { description: Not implemented } }
+ *     responses:
+ *       '202': { description: Scan queued, content: { application/json: { schema: { type: object, properties: { scanId: { type: string }, status: { type: string, enum: [queued] } } } } } }
+ *       '404': { description: Project not found or not owned }
+ *       '409': { description: This user already has an active scan }
  */
-projectRouter.post('/:id/scans',(_req,res)=>res.status(501).json({error:'Not implemented'}));
+projectRouter.post('/:id/scans',startScan);
