@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as controller from '../controllers/scanController';
 import { requireAuth } from '../middleware/requireAuth';
+import { fileContent } from '../controllers/fileSourceController';
 
 export const scanRouter = Router();
 scanRouter.use(requireAuth);
@@ -49,3 +50,13 @@ scanRouter.get('/:id/findings', controller.getFindings);
  *       '404': { description: Scan not found or not owned }
  */
 scanRouter.get('/:id/files', controller.getFiles);
+
+/** @openapi
+ * /api/scans/{id}/files/content:
+ *   get:
+ *     summary: Get stored source content for an owned scan
+ *     security: [{ cookieAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }, { in: query, name: path, required: true, schema: { type: string } }]
+ *     responses: { '200': { description: Stored source file, content: { application/json: { schema: { $ref: '#/components/schemas/FileSource' } } } }, '400': { description: Invalid path }, '404': { description: Scan or file not found } }
+ */
+scanRouter.get('/:id/files/content',fileContent);

@@ -53,6 +53,15 @@ projectRouter.patch('/:id',validateBody(patchSchema),controller.update);
 projectRouter.delete('/:id',controller.remove);
 /** @openapi
  * /api/projects/{id}/scans:
+ *   get:
+ *     summary: List scan history for an owned project
+ *     security: [{ cookieAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     responses: { '200': { description: Recent project scans }, '404': { description: Project not found or not owned } }
+ */
+projectRouter.get('/:id/scans',controller.scans);
+/** @openapi
+ * /api/projects/{id}/scans:
  *   post:
  *     summary: Queue an analysis scan for an owned project
  *     security: [{ cookieAuth: [] }]

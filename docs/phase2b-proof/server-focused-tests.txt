@@ -1,0 +1,584 @@
+
+> devsentry-server@1.0.0 test
+> jest --runInBand --runTestsByPath tests/api.test.ts tests/scanPipeline.test.ts --verbose
+
+CURL_DEMO_JWT=jwt.sign({ id: "6b0288b2df7f3724f7f604dd" }, env.JWT_SECRET, { expiresIn: "7d" })
+CURL_DEMO_TOKEN=<redacted>
+curl.exe -i -X POST "http://127.0.0.1:61078/api/projects/6b0288b2df7f3724f7f604de/scans" -H "Cookie: token=<redacted>"
+CURL_CREATE_HTTP=HTTP/1.1 202 Accepted
+CURL_CREATE_RESPONSE={"scanId":"6b0288b2df7f3724f7f604ea","status":"queued"}
+curl.exe -i "http://127.0.0.1:61078/api/scans/6b0288b2df7f3724f7f604ea" -H "Cookie: token=<redacted>"  # poll until status=done
+curl.exe -i "http://127.0.0.1:61078/api/scans/6b0288b2df7f3724f7f604ea/findings?page=1&limit=100" -H "Cookie: token=<redacted>"
+curl.exe -i "http://127.0.0.1:61078/api/scans/6b0288b2df7f3724f7f604ea/files?page=1&limit=100" -H "Cookie: token=<redacted>"
+curl.exe -i -X POST "http://127.0.0.1:61078/api/quick-scan" -H "Cookie: token=<redacted>" -H "Content-Type: application/json" --data-raw '{"language":"typescript","code":"const userId = \"42\";\nconst sql = \"SELECT * FROM users WHERE id = \" + userId;\ndb.query(sql);"}'
+CURL_QUICK_SCAN_HTTP=HTTP/1.1 200 OK
+CURL_QUICK_SCAN_JSON={
+  "findings": [
+    {
+      "filePath": "snippet.ts",
+      "line": 3,
+      "endLine": 3,
+      "ruleId": "devsentry.sql-string-concat",
+      "ruleIds": [
+        "devsentry.sql-string-concat"
+      ],
+      "source": "semgrep",
+      "severity": "critical",
+      "category": "security",
+      "message": "SQL is assembled with string concatenation; use parameterized queries."
+    }
+  ],
+  "metrics": {
+    "files": [],
+    "risk": {
+      "riskScore": 6.03,
+      "counts": {
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      }
+    }
+  },
+  "aiStatus": "skipped",
+  "warnings": [
+    "AI explanations skipped because no provider key is configured."
+  ]
+}
+CURL_QUICK_SCAN_OVERSIZE_HTTP=HTTP/1.1 413 Payload Too Large
+CURL_QUICK_SCAN_OVERSIZE_JSON={"error":{"code":"BODY_TOO_LARGE","message":"Code must be no larger than 20 KB."}}
+CURL_STATUS_HTTP=HTTP/1.1 200 OK
+CURL_STATUS_RESPONSE={"scanId":"6b0288b2df7f3724f7f604ea","status":"done","stage":null,"summary":{"riskScore":16.18,"counts":{"critical":6,"high":1,"medium":1,"low":2,"info":0}},"warnings":["AI analysis skipped because no provider key is configured."],"aiStatus":"skipped","timing":{"startedAt":"2026-11-22T06:16:19.026Z","finishedAt":"2026-11-22T06:16:36.486Z","durationMs":17460}}
+CURL_FINDINGS_JSON=[
+  {
+    "_id": "6b0288c4df7f3724f7f6055b",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 6,
+    "endLine": 6,
+    "ruleId": "devsentry.sql-string-concat",
+    "ruleIds": [
+      "devsentry.sql-string-concat"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "SQL is assembled with string concatenation; use parameterized queries.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f6055d",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 13,
+    "endLine": 13,
+    "ruleId": "devsentry.command-string-concat",
+    "ruleIds": [
+      "devsentry.command-string-concat"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "A shell command is assembled with concatenated input; avoid shell execution.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f6055f",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 20,
+    "endLine": 20,
+    "ruleId": "devsentry.hardcoded-secret",
+    "ruleIds": [
+      "devsentry.hardcoded-secret"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "A password or secret is hardcoded in a string literal.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60560",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 27,
+    "endLine": 27,
+    "ruleId": "devsentry.dynamic-eval",
+    "ruleIds": [
+      "devsentry.dynamic-eval"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "Dynamic evaluation can execute untrusted code.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60559",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.py",
+    "line": 6,
+    "endLine": 6,
+    "ruleId": "devsentry.sql-string-concat",
+    "ruleIds": [
+      "devsentry.sql-string-concat"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "SQL is assembled with string concatenation; use parameterized queries.",
+    "aiGenerated": false,
+    "riskScore": 16.16,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.449Z",
+    "updatedAt": "2026-11-22T06:16:36.449Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f6055a",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.py",
+    "line": 14,
+    "endLine": 14,
+    "ruleId": "devsentry.dynamic-eval-python",
+    "ruleIds": [
+      "devsentry.dynamic-eval-python",
+      "python.lang.security.audit.eval-detected.eval-detected"
+    ],
+    "source": "semgrep",
+    "severity": "critical",
+    "category": "security",
+    "message": "Dynamic evaluation can execute untrusted code.",
+    "aiGenerated": false,
+    "riskScore": 16.16,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60557",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "Buggy.java",
+    "line": 9,
+    "endLine": 9,
+    "ruleId": "devsentry.sql-string-concat-java",
+    "ruleIds": [
+      "devsentry.sql-string-concat-java",
+      "java.lang.security.audit.formatted-sql-string.formatted-sql-string"
+    ],
+    "source": "semgrep",
+    "severity": "high",
+    "category": "security",
+    "message": "SQL is assembled with string concatenation; use a PreparedStatement.",
+    "aiGenerated": false,
+    "riskScore": 6.99,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.448Z",
+    "updatedAt": "2026-11-22T06:16:36.448Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f6055c",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 7,
+    "endLine": 9,
+    "ruleId": "devsentry.empty-catch",
+    "ruleIds": [
+      "devsentry.empty-catch"
+    ],
+    "source": "semgrep",
+    "severity": "medium",
+    "category": "smell",
+    "message": "This catch block swallows an error; handle, report, or rethrow it.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f6055e",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "line": 17,
+    "endLine": 17,
+    "ruleId": "devsentry.loose-equality",
+    "ruleIds": [
+      "devsentry.loose-equality"
+    ],
+    "source": "semgrep",
+    "severity": "low",
+    "category": "style",
+    "message": "Use strict equality to avoid implicit type coercion.",
+    "aiGenerated": false,
+    "riskScore": 25.39,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.450Z",
+    "updatedAt": "2026-11-22T06:16:36.450Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60558",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "Buggy.java",
+    "line": 17,
+    "endLine": 17,
+    "ruleId": "devsentry.java-string-reference-equality",
+    "ruleIds": [
+      "devsentry.java-string-reference-equality"
+    ],
+    "source": "semgrep",
+    "severity": "low",
+    "category": "style",
+    "message": "Use String.equals() instead of comparing Java strings with ==.",
+    "aiGenerated": false,
+    "riskScore": 6.99,
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.449Z",
+    "updatedAt": "2026-11-22T06:16:36.449Z"
+  }
+]
+CURL_FILERISK_JSON=[
+  {
+    "_id": "6b0288c4df7f3724f7f6056f",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.ts",
+    "language": "typescript",
+    "riskScore": 25.39,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 2,
+        "normalized": 0.06666666666666667,
+        "weight": 0.25,
+        "contribution": 1.6666666666666667,
+        "_id": "6b0288c4df7f3724f7f60570"
+      },
+      {
+        "name": "churn",
+        "raw": 2,
+        "normalized": 0.1,
+        "weight": 0.2,
+        "contribution": 2,
+        "_id": "6b0288c4df7f3724f7f60571"
+      },
+      {
+        "name": "bugFix",
+        "raw": 1,
+        "normalized": 0.2,
+        "weight": 0.2,
+        "contribution": 4,
+        "_id": "6b0288c4df7f3724f7f60572"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 35,
+        "normalized": 1,
+        "weight": 0.15,
+        "contribution": 15,
+        "_id": "6b0288c4df7f3724f7f60573"
+      },
+      {
+        "name": "authors",
+        "raw": 2,
+        "normalized": 0.25,
+        "weight": 0.1,
+        "contribution": 2.5,
+        "_id": "6b0288c4df7f3724f7f60574"
+      },
+      {
+        "name": "size",
+        "raw": 22,
+        "normalized": 0.022,
+        "weight": 0.1,
+        "contribution": 0.21999999999999997,
+        "_id": "6b0288c4df7f3724f7f60575"
+      }
+    ],
+    "metrics": {
+      "nloc": 22,
+      "maxCcn": 2,
+      "avgCcn": 1.1666666666666667,
+      "functionCount": 6,
+      "maxParams": 2,
+      "commits90d": 2,
+      "authors": 2,
+      "bugFixCommits": 1,
+      "findingCounts": {
+        "critical": 4,
+        "high": 0,
+        "medium": 1,
+        "low": 1,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.457Z",
+    "updatedAt": "2026-11-22T06:16:36.457Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60568",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "buggy.py",
+    "language": "python",
+    "riskScore": 16.16,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 1,
+        "normalized": 0.03333333333333333,
+        "weight": 0.25,
+        "contribution": 0.8333333333333334,
+        "_id": "6b0288c4df7f3724f7f60569"
+      },
+      {
+        "name": "churn",
+        "raw": 2,
+        "normalized": 0.1,
+        "weight": 0.2,
+        "contribution": 2,
+        "_id": "6b0288c4df7f3724f7f6056a"
+      },
+      {
+        "name": "bugFix",
+        "raw": 0,
+        "normalized": 0,
+        "weight": 0.2,
+        "contribution": 0,
+        "_id": "6b0288c4df7f3724f7f6056b"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 16,
+        "normalized": 0.8,
+        "weight": 0.15,
+        "contribution": 12,
+        "_id": "6b0288c4df7f3724f7f6056c"
+      },
+      {
+        "name": "authors",
+        "raw": 1,
+        "normalized": 0.125,
+        "weight": 0.1,
+        "contribution": 1.25,
+        "_id": "6b0288c4df7f3724f7f6056d"
+      },
+      {
+        "name": "size",
+        "raw": 8,
+        "normalized": 0.008,
+        "weight": 0.1,
+        "contribution": 0.08000000000000002,
+        "_id": "6b0288c4df7f3724f7f6056e"
+      }
+    ],
+    "metrics": {
+      "nloc": 8,
+      "maxCcn": 1,
+      "avgCcn": 1,
+      "functionCount": 3,
+      "maxParams": 2,
+      "commits90d": 2,
+      "authors": 1,
+      "bugFixCommits": 0,
+      "findingCounts": {
+        "critical": 2,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.457Z",
+    "updatedAt": "2026-11-22T06:16:36.457Z"
+  },
+  {
+    "_id": "6b0288c4df7f3724f7f60561",
+    "scan": "6b0288b2df7f3724f7f604ea",
+    "owner": "6b0288b2df7f3724f7f604dd",
+    "filePath": "Buggy.java",
+    "language": "java",
+    "riskScore": 6.99,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 1,
+        "normalized": 0.03333333333333333,
+        "weight": 0.25,
+        "contribution": 0.8333333333333334,
+        "_id": "6b0288c4df7f3724f7f60562"
+      },
+      {
+        "name": "churn",
+        "raw": 1,
+        "normalized": 0.05,
+        "weight": 0.2,
+        "contribution": 1,
+        "_id": "6b0288c4df7f3724f7f60563"
+      },
+      {
+        "name": "bugFix",
+        "raw": 0,
+        "normalized": 0,
+        "weight": 0.2,
+        "contribution": 0,
+        "_id": "6b0288c4df7f3724f7f60564"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 5,
+        "normalized": 0.25,
+        "weight": 0.15,
+        "contribution": 3.75,
+        "_id": "6b0288c4df7f3724f7f60565"
+      },
+      {
+        "name": "authors",
+        "raw": 1,
+        "normalized": 0.125,
+        "weight": 0.1,
+        "contribution": 1.25,
+        "_id": "6b0288c4df7f3724f7f60566"
+      },
+      {
+        "name": "size",
+        "raw": 16,
+        "normalized": 0.016,
+        "weight": 0.1,
+        "contribution": 0.16000000000000003,
+        "_id": "6b0288c4df7f3724f7f60567"
+      }
+    ],
+    "metrics": {
+      "nloc": 16,
+      "maxCcn": 1,
+      "avgCcn": 1,
+      "functionCount": 3,
+      "maxParams": 2,
+      "commits90d": 1,
+      "authors": 1,
+      "bugFixCommits": 0,
+      "findingCounts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:16:36.456Z",
+    "updatedAt": "2026-11-22T06:16:36.456Z"
+  }
+]
+PASS tests/scanPipeline.test.ts (79.471 s)
+  scan pipeline
+    √ adds AI explanations, drops review lines outside the source, redacts literals, and stores viewer content (954 ms)
+    √ scans three real fixtures through curl, persists results, and removes its clone directory (27166 ms)
+    √ marks a failed analysis with a sanitized error and removes its temp clone (484 ms)
+    √ enforces the whole-scan timeout and removes its temp clone (5088 ms)
+    √ marks queued and running scans failed after restart recovery (60 ms)
+
+PASS tests/api.test.ts (16.692 s)
+  API
+    √ health returns 200 (197 ms)
+    √ serves the Swagger UI and API contract (59 ms)
+    √ authenticates the current user only with a valid cookie (81 ms)
+    √ logout clears the token (34 ms)
+    √ Google OAuth redirects to Google and handles callback success and failure (61 ms)
+    √ error handler hides server errors and preserves client status (32 ms)
+    √ creates and lists a project and rejects invalid hosts (137 ms)
+    √ gets and updates an owned project (94 ms)
+    √ hides another owner’s project for get, update, and delete (83 ms)
+    √ deletes project scans, findings, and file risks (112 ms)
+    √ scan creation returns 202 and 409 for active work, quick scan validates limits (114 ms)
+    √ scan reads require auth and return 404 for missing or foreign scans (113 ms)
+    √ filters and paginates owned findings and file risks (146 ms)
+    √ dashboard is owner-scoped and file source rejects traversal and foreign scans (236 ms)
+    √ quick scan runs without persistence and removes its temporary source (75 ms)
+    √ quick scan cleans up after a tool failure and whole-request timeout (103 ms)
+    √ quick scan rate limit rejects the eleventh request (199 ms)
+
+--------------------------|---------|----------|---------|---------|--------------------------
+File                      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s        
+--------------------------|---------|----------|---------|---------|--------------------------
+All files                 |   81.27 |    60.38 |   86.36 |   91.16 |                          
+ src                      |   96.42 |      100 |      50 |     100 |                          
+  app.ts                  |   96.42 |      100 |      50 |     100 |                          
+ src/config               |   81.81 |    41.66 |     100 |     100 |                          
+  env.ts                  |   81.81 |    41.66 |     100 |     100 | 5-9                      
+ src/controllers          |   81.81 |    71.66 |      96 |   82.66 |                          
+  dashboardController.ts  |      80 |      100 |     100 |     100 |                          
+  fileSourceController.ts |   85.71 |    84.61 |     100 |     100 | 5                        
+  projectController.ts    |   86.04 |      100 |     100 |     100 |                          
+  quickScanController.ts  |   75.28 |    56.66 |      90 |   75.92 | 41-52,55,61              
+  scanController.ts       |      90 |    84.61 |     100 |     100 | 6                        
+ src/middleware           |    92.5 |    81.25 |     100 |     100 |                          
+  errorHandler.ts         |     100 |       90 |     100 |     100 | 2                        
+  rateLimit.ts            |     100 |      100 |     100 |     100 |                          
+  requireAuth.ts          |      85 |       60 |     100 |     100 | 9                        
+  validate.ts             |     100 |      100 |     100 |     100 |                          
+ src/models               |     100 |      100 |     100 |     100 |                          
+  FileRisk.ts             |     100 |      100 |     100 |     100 |                          
+  FileSource.ts           |     100 |      100 |     100 |     100 |                          
+  Finding.ts              |     100 |      100 |     100 |     100 |                          
+  Project.ts              |     100 |      100 |     100 |     100 |                          
+  Scan.ts                 |     100 |      100 |     100 |     100 |                          
+  User.ts                 |     100 |      100 |     100 |     100 |                          
+ src/routes               |   97.46 |    83.33 |     100 |     100 |                          
+  auth.ts                 |      92 |    83.33 |     100 |     100 | 14                       
+  index.ts                |     100 |      100 |     100 |     100 |                          
+  projects.ts             |     100 |      100 |     100 |     100 |                          
+  quickScan.ts            |     100 |      100 |     100 |     100 |                          
+  scans.ts                |     100 |      100 |     100 |     100 |                          
+ src/services             |   85.31 |    62.94 |   92.43 |   91.47 |                          
+  dashboardService.ts     |     100 |       75 |     100 |     100 | 10-11                    
+  gitHistoryService.ts    |   96.15 |    71.42 |     100 |     100 | 13-17,22-23              
+  metricsService.ts       |    91.2 |    66.66 |    90.9 |     100 | 10-17                    
+  projectService.ts       |   93.75 |    44.44 |     100 |     100 | 9-11                     
+  repoService.ts          |   61.11 |    55.55 |   66.66 |   75.92 | 14-15,31-38,47,53-54     
+  riskScoringService.ts   |     100 |       50 |     100 |     100 | 16                       
+  scanQueryService.ts     |     100 |    88.88 |     100 |     100 | 7                        
+  scanQueue.ts            |   83.87 |       40 |   66.66 |     100 | 5-6                      
+  scanRecoveryService.ts  |     100 |      100 |     100 |     100 |                          
+  scanService.ts          |   86.69 |    61.86 |   94.11 |   95.17 | 68,79-80,152-153,164,171 
+  semgrepService.ts       |   77.77 |    57.64 |     100 |   85.29 | 33-36,80-86              
+  severityMap.ts          |     100 |       90 |     100 |     100 | 12                       
+ src/services/ai          |   23.65 |      8.1 |   27.77 |   69.56 |                          
+  aiService.ts            |   22.47 |      8.1 |   31.25 |   73.68 | 18-20,22-23              
+  prompts.ts              |      50 |      100 |       0 |      50 | 2,5                      
+--------------------------|---------|----------|---------|---------|--------------------------
+Test Suites: 2 passed, 2 total
+Tests:       22 passed, 22 total
+Snapshots:   0 total
+Time:        98.623 s, estimated 122 s
+Ran all test suites within paths "tests/api.test.ts", "tests/scanPipeline.test.ts".

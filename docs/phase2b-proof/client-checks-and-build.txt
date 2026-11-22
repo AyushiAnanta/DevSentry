@@ -1,0 +1,26 @@
+
+> devsentry-client@1.0.0 typecheck
+> tsc --noEmit -p tsconfig.app.json
+
+
+> devsentry-client@1.0.0 lint
+> eslint src --ext .ts,.tsx
+
+
+> devsentry-client@1.0.0 build
+> tsc -b && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 2120 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.42 kB │ gzip:   0.30 kB
+dist/assets/index-DKd0j7yx.css   25.37 kB │ gzip:   6.70 kB
+dist/assets/index-D0Gmc664.js   756.34 kB │ gzip: 223.39 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 21.21s

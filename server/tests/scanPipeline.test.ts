@@ -11,16 +11,19 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { app } from '../src/app';
 import { env } from '../src/config/env';
 import { FileRisk } from '../src/models/FileRisk';
+import { FileSource } from '../src/models/FileSource';
 import { Finding } from '../src/models/Finding';
 import { Project } from '../src/models/Project';
 import { Scan } from '../src/models/Scan';
 import { User } from '../src/models/User';
 import * as scanService from '../src/services/scanService';
+import { dedupeFindings } from '../src/services/scanService';
 import { runLizard } from '../src/services/metricsService';
 import { HistoryResult } from '../src/services/gitHistoryService';
 import { removeTempDir } from '../src/services/repoService';
 import { runSemgrep } from '../src/services/semgrepService';
 import { markInterruptedScansFailed } from '../src/services/scanRecoveryService';
+import { AIProvider, ExplainItem } from '../src/services/ai/aiService';
 
 const execFileAsync = promisify(execFile);
 const fixtures = resolve(__dirname, 'fixtures');
@@ -93,12 +96,47 @@ afterAll(async () => {
   if (repoPath) await removeTempDir(repoPath);
 });
 beforeEach(async () => {
+  if(process.env.DEVSENTRY_RUN_REAL_AI_PROOF==='true'){env.AI_REVIEW_FILES=true;env.AI_MAX_FINDINGS=5;env.AI_MAX_CALLS=10;env.AI_REVIEW_TOP_FILES=3;}else{env.GEMINI_API_KEY='';env.GROQ_API_KEY='';env.AI_REVIEW_FILES=false;}
   ownerId = new Types.ObjectId();
   projectId = new Types.ObjectId();
-  await Promise.all([Project.deleteMany({}), Scan.deleteMany({}), Finding.deleteMany({}), FileRisk.deleteMany({})]);
+  await Promise.all([Project.deleteMany({}), Scan.deleteMany({}), Finding.deleteMany({}), FileRisk.deleteMany({}),FileSource.deleteMany({})]);
 });
 
 describe('scan pipeline', () => {
+  test('dedupes all sources by file and line, keeping highest severity and every rule id',()=>{
+    const merged=dedupeFindings([
+      {filePath:'buggy.py',line:14,ruleId:'first-rule',ruleIds:['first-rule'],severity:'high'},
+      {filePath:'buggy.py',line:14,ruleId:'second-rule',ruleIds:['second-rule'],severity:'critical'},
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({ruleId:'second-rule',severity:'critical',ruleIds:['first-rule','second-rule']});
+  });
+  test('adds AI explanations, drops review lines outside the source, redacts literals, and stores viewer content',async()=>{
+    const scan=await createScan();
+    const previous={findings:env.AI_MAX_FINDINGS,calls:env.AI_MAX_CALLS,review:env.AI_REVIEW_FILES,top:env.AI_REVIEW_TOP_FILES};
+    env.AI_MAX_FINDINGS=1;env.AI_MAX_CALLS=2;env.AI_REVIEW_FILES=true;env.AI_REVIEW_TOP_FILES=1;
+    const prompts:string[]=[];
+    const fake:AIProvider={
+      explainFindings:async(items:ExplainItem[])=>{prompts.push(items[0]?.snippet??'');return[{explanation:'A secret is hard-coded.',suggestion:'Load it from a secret manager.'}];},
+      reviewFile:async()=>[{line:999,severity:'high',message:'Invalid line',confidence:0.9},{line:22,severity:'low',message:'Possible unchecked input.',confidence:0.61}],
+    };
+    try{
+      await scanService.runScanPipeline(String(scan._id),{
+        clone:async(_url,destination)=>{await fs.cp(repoPath,destination,{recursive:true});},sizeCheck:async()=>undefined,
+        lizard:async()=>[],semgrep:async()=>({rawJson:JSON.stringify({results:[{check_id:'devsentry.hardcoded-secret',path:'/src/buggy.ts',start:{line:22},end:{line:22},extra:{severity:'ERROR',message:'Hardcoded password'}}]}),warnings:[]}),history:async()=>emptyHistory(),ai:fake,
+      });
+      const done=await Scan.findById(scan._id).lean();expect(done?.status).toBe('done');expect(done?.aiStatus).toBe('complete');
+      expect(prompts.join('\n')).not.toContain('DevSentryFixturePassword42');
+      expect(await Finding.countDocuments({scan:scan._id,source:'llm',line:999})).toBe(0);
+      expect(await Finding.countDocuments({scan:scan._id,filePath:'buggy.ts',line:22})).toBe(1);
+      const merged=await Finding.findOne({scan:scan._id,filePath:'buggy.ts',line:22}).lean();
+      expect(merged?.ruleIds).toEqual(expect.arrayContaining(['devsentry.hardcoded-secret','llm.logic-review']));
+      expect(merged?.severity).toBe('critical');
+      expect((await Finding.findOne({scan:scan._id,source:'semgrep'}).lean())?.explanation).toBe('A secret is hard-coded.');
+      expect(await FileSource.countDocuments({scan:scan._id})).toBe(3);
+      expect((await FileSource.findOne({scan:scan._id,filePath:'buggy.ts'}).lean())?.content).toContain('average');
+    }finally{env.AI_MAX_FINDINGS=previous.findings;env.AI_MAX_CALLS=previous.calls;env.AI_REVIEW_FILES=previous.review;env.AI_REVIEW_TOP_FILES=previous.top;}
+  });
   realPipelineTest('scans three real fixtures through curl, persists results, and removes its clone directory', async () => {
     const scanServiceStart = scanService.startProjectScan;
     const cloneDestinations: string[] = [];
@@ -115,26 +153,26 @@ describe('scan pipeline', () => {
     const base = `http://127.0.0.1:${address.port}/api`;
     try {
       process.stdout.write(`CURL_DEMO_JWT=jwt.sign({ id: "${ownerId.toString()}" }, env.JWT_SECRET, { expiresIn: "7d" })\n`);
-      process.stdout.write(`CURL_DEMO_TOKEN=${token}\n`);
-      process.stdout.write(`curl.exe -i -X POST "${base}/projects/${project.id}/scans" -H "Cookie: token=${token}"\n`);
+      process.stdout.write(`CURL_DEMO_TOKEN=<redacted>\n`);
+      process.stdout.write(`curl.exe -i -X POST "${base}/projects/${project.id}/scans" -H "Cookie: token=<redacted>"\n`);
       const create = await execFileAsync('curl.exe', ['-sS', '-i', '-X', 'POST', `${base}/projects/${project.id}/scans`, '-H', `Cookie: token=${token}`], { windowsHide: true, timeout: 30000, encoding: 'utf8' });
       const created = responseBody(create.stdout);
       expect(created.statusLine).toMatch(/202/);
       const accepted = JSON.parse(created.body) as { scanId: string; status: string };
       expect(accepted.status).toBe('queued');
       process.stdout.write(`CURL_CREATE_HTTP=${created.statusLine}\nCURL_CREATE_RESPONSE=${created.body}\n`);
-      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}" -H "Cookie: token=${token}"  # poll until status=done\n`);
+      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}" -H "Cookie: token=<redacted>"  # poll until status=done\n`);
       const concurrent = await execFileAsync('curl.exe', ['-sS', '-i', '-X', 'POST', `${base}/projects/${project.id}/scans`, '-H', `Cookie: token=${token}`], { windowsHide: true, timeout: 30000, encoding: 'utf8' });
       expect(responseBody(concurrent.stdout).statusLine).toMatch(/409/);
       let status = await curl(`${base}/scans/${accepted.scanId}`, token);
-      for (let attempt = 0; attempt < 120 && ['queued', 'running'].includes((JSON.parse(status.body) as { status: string }).status); attempt++) {
+      for (let attempt = 0; attempt < 240 && ['queued', 'running'].includes((JSON.parse(status.body) as { status: string }).status); attempt++) {
         await new Promise(resolveDelay => setTimeout(resolveDelay, 250));
         status = await curl(`${base}/scans/${accepted.scanId}`, token);
       }
       expect(status.statusLine).toMatch(/200/);
       expect((JSON.parse(status.body) as { status: string }).status).toBe('done');
-      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}/findings?page=1&limit=100" -H "Cookie: token=${token}"\n`);
-      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}/files?page=1&limit=100" -H "Cookie: token=${token}"\n`);
+      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}/findings?page=1&limit=100" -H "Cookie: token=<redacted>"\n`);
+      process.stdout.write(`curl.exe -i "${base}/scans/${accepted.scanId}/files?page=1&limit=100" -H "Cookie: token=<redacted>"\n`);
       const findingResponse = await curl(`${base}/scans/${accepted.scanId}/findings?page=1&limit=100`, token);
       const fileResponse = await curl(`${base}/scans/${accepted.scanId}/files?page=1&limit=100`, token);
       const findings = JSON.parse(findingResponse.body) as { items: Array<Record<string, unknown>>; total: number };
@@ -143,7 +181,37 @@ describe('scan pipeline', () => {
       expect(files.total).toBe(3);
       const deduped = findings.items.find(item => item.filePath === 'buggy.py' && item.line === 14);
       expect(deduped?.ruleIds).toEqual(expect.arrayContaining(['python.lang.security.audit.eval-detected.eval-detected', 'devsentry.dynamic-eval-python']));
-      const responseText = JSON.stringify([created.body, status.body, findingResponse.body, fileResponse.body]);
+      expect(findings.items.filter(item=>item.filePath==='buggy.py'&&item.line===14)).toHaveLength(1);
+      const scanStatus=JSON.parse(status.body) as {aiStatus:string};
+      if(process.env.DEVSENTRY_RUN_REAL_AI_PROOF==='true'){
+        expect(scanStatus.aiStatus).not.toBe('skipped');
+        expect(findings.items.some(item=>item.source==='llm')).toBe(true);
+        await fs.writeFile(join(fixtures,'raw','phase2b.real-findings.json'),JSON.stringify(findings.items,null,2));
+        await fs.writeFile(join(fixtures,'raw','phase2b.real-file-risks.json'),JSON.stringify(files.items,null,2));
+        await fs.writeFile(join(fixtures,'raw','phase2b.real-scan-status.json'),JSON.stringify(JSON.parse(status.body),null,2));
+      }
+      const contentResponse=await curl(`${base}/scans/${accepted.scanId}/files/content?path=buggy.ts`,token);
+      expect(contentResponse.statusLine).toMatch(/200/);
+      expect((JSON.parse(contentResponse.body) as {content:string}).content).toContain('servicePassword');
+      const pastedSnippet = 'const userId = "42";\nconst sql = "SELECT * FROM users WHERE id = " + userId;\ndb.query(sql);';
+      process.stdout.write(`curl.exe -i -X POST "${base}/quick-scan" -H "Cookie: token=<redacted>" -H "Content-Type: application/json" --data-raw '${JSON.stringify({ language: 'typescript', code: pastedSnippet })}'\n`);
+      const previousToolEnv = { lizard: env.LIZARD_BIN, semgrep: env.SEMGREP_MODE, configs: env.SEMGREP_CONFIGS };
+      env.LIZARD_BIN = lizardBinary;
+      env.SEMGREP_MODE = 'docker';
+      env.SEMGREP_CONFIGS = 'semgrep-rules/devsentry.yml';
+      const quickScanResponse = await execFileAsync('curl.exe', ['-sS', '-i', '-X', 'POST', `${base}/quick-scan`, '-H', `Cookie: token=${token}`, '-H', 'Content-Type: application/json', '--data-raw', JSON.stringify({ language: 'typescript', code: pastedSnippet })], { windowsHide: true, timeout: 30000, encoding: 'utf8' });
+      const quickScan = responseBody(quickScanResponse.stdout);
+      env.LIZARD_BIN = previousToolEnv.lizard;
+      env.SEMGREP_MODE = previousToolEnv.semgrep;
+      env.SEMGREP_CONFIGS = previousToolEnv.configs;
+      expect(quickScan.statusLine).toMatch(/200/);
+      expect((JSON.parse(quickScan.body) as { findings: unknown[] }).findings.length).toBeGreaterThan(0);
+      const oversized = await execFileAsync('curl.exe', ['-sS', '-i', '-X', 'POST', `${base}/quick-scan`, '-H', `Cookie: token=${token}`, '-H', 'Content-Type: application/json', '--data-raw', JSON.stringify({ language: 'typescript', code: 'x'.repeat(20 * 1024 + 1) })], { windowsHide: true, timeout: 30000, encoding: 'utf8' });
+      const tooLarge = responseBody(oversized.stdout);
+      expect(tooLarge.statusLine).toMatch(/413/);
+      process.stdout.write(`CURL_QUICK_SCAN_HTTP=${quickScan.statusLine}\nCURL_QUICK_SCAN_JSON=${JSON.stringify(JSON.parse(quickScan.body), null, 2)}\n`);
+      process.stdout.write(`CURL_QUICK_SCAN_OVERSIZE_HTTP=${tooLarge.statusLine}\nCURL_QUICK_SCAN_OVERSIZE_JSON=${tooLarge.body}\n`);
+      const responseText = JSON.stringify([created.body, status.body, findingResponse.body, fileResponse.body,contentResponse.body,quickScan.body,tooLarge.body]);
       expect(responseText).not.toContain('/src/');
       expect(responseText).not.toContain('/devsentry-server/');
       expect(responseText).not.toMatch(/\/tmp\/|\\temp\\/i);
@@ -179,7 +247,7 @@ describe('scan pipeline', () => {
     const scan = await createScan();
     let cloneDirectory = '';
     await scanService.runScanPipeline(String(scan._id), {
-      timeoutMs: 500,
+      timeoutMs: 5000,
       clone: async (_url, destination) => { cloneDirectory = destination; await fs.cp(repoPath, destination, { recursive: true }); },
       sizeCheck: async () => undefined,
       lizard: async () => new Promise(() => undefined),

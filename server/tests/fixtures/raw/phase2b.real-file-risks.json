@@ -1,0 +1,236 @@
+[
+  {
+    "_id": "6b028a9363890b912baf869b",
+    "scan": "6b028a7763890b912baf85ce",
+    "owner": "6b028a7663890b912baf85c1",
+    "filePath": "buggy.ts",
+    "language": "typescript",
+    "riskScore": 25.39,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 2,
+        "normalized": 0.06666666666666667,
+        "weight": 0.25,
+        "contribution": 1.6666666666666667,
+        "_id": "6b028a9363890b912baf869c"
+      },
+      {
+        "name": "churn",
+        "raw": 2,
+        "normalized": 0.1,
+        "weight": 0.2,
+        "contribution": 2,
+        "_id": "6b028a9363890b912baf869d"
+      },
+      {
+        "name": "bugFix",
+        "raw": 1,
+        "normalized": 0.2,
+        "weight": 0.2,
+        "contribution": 4,
+        "_id": "6b028a9363890b912baf869e"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 35,
+        "normalized": 1,
+        "weight": 0.15,
+        "contribution": 15,
+        "_id": "6b028a9363890b912baf869f"
+      },
+      {
+        "name": "authors",
+        "raw": 2,
+        "normalized": 0.25,
+        "weight": 0.1,
+        "contribution": 2.5,
+        "_id": "6b028a9363890b912baf86a0"
+      },
+      {
+        "name": "size",
+        "raw": 22,
+        "normalized": 0.022,
+        "weight": 0.1,
+        "contribution": 0.21999999999999997,
+        "_id": "6b028a9363890b912baf86a1"
+      }
+    ],
+    "metrics": {
+      "nloc": 22,
+      "maxCcn": 2,
+      "avgCcn": 1.1666666666666667,
+      "functionCount": 6,
+      "maxParams": 2,
+      "commits90d": 2,
+      "authors": 2,
+      "bugFixCommits": 1,
+      "findingCounts": {
+        "critical": 4,
+        "high": 0,
+        "medium": 1,
+        "low": 1,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:24:19.842Z",
+    "updatedAt": "2026-11-22T06:24:19.842Z"
+  },
+  {
+    "_id": "6b028a9363890b912baf8694",
+    "scan": "6b028a7763890b912baf85ce",
+    "owner": "6b028a7663890b912baf85c1",
+    "filePath": "buggy.py",
+    "language": "python",
+    "riskScore": 16.16,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 1,
+        "normalized": 0.03333333333333333,
+        "weight": 0.25,
+        "contribution": 0.8333333333333334,
+        "_id": "6b028a9363890b912baf8695"
+      },
+      {
+        "name": "churn",
+        "raw": 2,
+        "normalized": 0.1,
+        "weight": 0.2,
+        "contribution": 2,
+        "_id": "6b028a9363890b912baf8696"
+      },
+      {
+        "name": "bugFix",
+        "raw": 0,
+        "normalized": 0,
+        "weight": 0.2,
+        "contribution": 0,
+        "_id": "6b028a9363890b912baf8697"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 16,
+        "normalized": 0.8,
+        "weight": 0.15,
+        "contribution": 12,
+        "_id": "6b028a9363890b912baf8698"
+      },
+      {
+        "name": "authors",
+        "raw": 1,
+        "normalized": 0.125,
+        "weight": 0.1,
+        "contribution": 1.25,
+        "_id": "6b028a9363890b912baf8699"
+      },
+      {
+        "name": "size",
+        "raw": 8,
+        "normalized": 0.008,
+        "weight": 0.1,
+        "contribution": 0.08000000000000002,
+        "_id": "6b028a9363890b912baf869a"
+      }
+    ],
+    "metrics": {
+      "nloc": 8,
+      "maxCcn": 1,
+      "avgCcn": 1,
+      "functionCount": 3,
+      "maxParams": 2,
+      "commits90d": 2,
+      "authors": 1,
+      "bugFixCommits": 0,
+      "findingCounts": {
+        "critical": 2,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:24:19.842Z",
+    "updatedAt": "2026-11-22T06:24:19.842Z"
+  },
+  {
+    "_id": "6b028a9363890b912baf868d",
+    "scan": "6b028a7763890b912baf85ce",
+    "owner": "6b028a7663890b912baf85c1",
+    "filePath": "Buggy.java",
+    "language": "java",
+    "riskScore": 6.99,
+    "factors": [
+      {
+        "name": "complexity",
+        "raw": 1,
+        "normalized": 0.03333333333333333,
+        "weight": 0.25,
+        "contribution": 0.8333333333333334,
+        "_id": "6b028a9363890b912baf868e"
+      },
+      {
+        "name": "churn",
+        "raw": 1,
+        "normalized": 0.05,
+        "weight": 0.2,
+        "contribution": 1,
+        "_id": "6b028a9363890b912baf868f"
+      },
+      {
+        "name": "bugFix",
+        "raw": 0,
+        "normalized": 0,
+        "weight": 0.2,
+        "contribution": 0,
+        "_id": "6b028a9363890b912baf8690"
+      },
+      {
+        "name": "staticFindings",
+        "raw": 5,
+        "normalized": 0.25,
+        "weight": 0.15,
+        "contribution": 3.75,
+        "_id": "6b028a9363890b912baf8691"
+      },
+      {
+        "name": "authors",
+        "raw": 1,
+        "normalized": 0.125,
+        "weight": 0.1,
+        "contribution": 1.25,
+        "_id": "6b028a9363890b912baf8692"
+      },
+      {
+        "name": "size",
+        "raw": 16,
+        "normalized": 0.016,
+        "weight": 0.1,
+        "contribution": 0.16000000000000003,
+        "_id": "6b028a9363890b912baf8693"
+      }
+    ],
+    "metrics": {
+      "nloc": 16,
+      "maxCcn": 1,
+      "avgCcn": 1,
+      "functionCount": 3,
+      "maxParams": 2,
+      "commits90d": 1,
+      "authors": 1,
+      "bugFixCommits": 0,
+      "findingCounts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "info": 0
+      }
+    },
+    "__v": 0,
+    "createdAt": "2026-11-22T06:24:19.840Z",
+    "updatedAt": "2026-11-22T06:24:19.840Z"
+  }
+]

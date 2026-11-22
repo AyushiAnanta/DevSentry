@@ -38,8 +38,9 @@ export async function checkGithubSize(repo:ParsedGithubUrl,warnings:RepoWarningS
   }catch(error){if(error instanceof Error&&error.message.startsWith('Repository exceeds'))throw error;warnings.warnings.push('GitHub size pre-check unavailable; enforcing the limit after clone.');}
 }
 
-export async function cloneRepo(repo:ParsedGithubUrl,cloneImpl:CloneImplementation=cloneWithSimpleGit,timeoutMs=env.SCAN_TIMEOUT_MS):Promise<string>{
+export async function cloneRepo(repo:ParsedGithubUrl,cloneImpl:CloneImplementation=cloneWithSimpleGit,timeoutMs=env.SCAN_TIMEOUT_MS,onDestination?:(destination:string)=>void):Promise<string>{
   const destination=await fs.mkdtemp(join(tmpdir(),'devsentry-'));
+  onDestination?.(destination);
   try{
     await cloneImpl(repo.cloneUrl,destination,timeoutMs);
     return destination;

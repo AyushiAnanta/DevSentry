@@ -1,0 +1,11 @@
+import {api} from '../../api/client';
+import type {Finding,FileRisk,Scan} from './types';
+type Page<T>={items:T[];page:number;limit:number;total:number;totalPages:number};
+export const startScan=async(id:string)=> (await api.post<{scanId:string;status:string}>(`/projects/${id}/scans`)).data;
+export const getScan=async(id:string)=>(await api.get<Scan>(`/scans/${id}`)).data;
+export const getFindings=async(id:string,query:string)=>(await api.get<Page<Finding>>(`/scans/${id}/findings?${query}`)).data;
+export const getFileRisks=async(id:string)=>(await api.get<Page<FileRisk>>(`/scans/${id}/files?limit=100`)).data;
+export const getFileContent=async(id:string,path:string)=>(await api.get<{filePath:string;content:string}>(`/scans/${id}/files/content`,{params:{path}})).data;
+export const getProjectScans=async(id:string)=>(await api.get<Scan[]>(`/projects/${id}/scans`)).data;
+export const quickScan=async(language:string,code:string)=>(await api.post('/quick-scan',{language,code})).data;
+export const getDashboard=async()=>(await api.get('/dashboard')).data;

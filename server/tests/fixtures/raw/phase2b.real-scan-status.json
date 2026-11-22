@@ -1,0 +1,22 @@
+{
+  "scanId": "6b028a7763890b912baf85ce",
+  "status": "done",
+  "stage": null,
+  "summary": {
+    "riskScore": 16.18,
+    "counts": {
+      "critical": 12,
+      "high": 4,
+      "medium": 2,
+      "low": 2,
+      "info": 0
+    }
+  },
+  "warnings": [],
+  "aiStatus": "complete",
+  "timing": {
+    "startedAt": "2026-11-22T06:23:51.441Z",
+    "finishedAt": "2026-11-22T06:24:19.866Z",
+    "durationMs": 28425
+  }
+}

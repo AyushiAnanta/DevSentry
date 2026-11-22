@@ -1,0 +1,5 @@
+import { NextFunction,Request,Response } from 'express';
+import { Types } from 'mongoose';
+import { FileSource } from '../models/FileSource';
+import { Scan } from '../models/Scan';
+export async function fileContent(req:Request,res:Response,next:NextFunction):Promise<void>{try{const scanId=String(req.params.id);const path=typeof req.query.path==='string'?req.query.path:'';if(!Types.ObjectId.isValid(scanId)||!path||path.includes('\\')||path.startsWith('/')||path.split('/').some(part=>!part||part==='.'||part==='..')){res.status(400).json({error:{code:'INVALID_PATH',message:'A stored relative file path is required'}});return;}const owned=await Scan.exists({_id:scanId,owner:req.user!.id});if(!owned){res.status(404).json({error:{code:'NOT_FOUND',message:'Scan not found'}});return;}const file=await FileSource.findOne({scan:scanId,owner:req.user!.id,filePath:path}).lean();if(!file){res.status(404).json({error:{code:'FILE_NOT_STORED',message:'This file was not stored for viewing'}});return;}res.json({filePath:file.filePath,content:file.content});}catch(error){next(error);}}
