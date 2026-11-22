@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
+import { logger } from './config/logger';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import passport from './config/passport';
@@ -17,7 +18,7 @@ app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(pinoHttp({ enabled: env.NODE_ENV !== 'test' }));
+app.use(pinoHttp({ logger, enabled: env.NODE_ENV !== 'test' }));
 app.use('/api', generalLimiter);
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -1,8 +1,9 @@
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename,extname,join,relative,sep } from 'node:path';
+import { basename, extname, join, relative, sep } from 'node:path';
 import { simpleGit } from 'simple-git';
 import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 const ignoredDirectories=new Set(['.git','node_modules','dist','build','vendor']);
 const sourceExtensions=new Set(['.js','.jsx','.ts','.tsx','.py','.java']);
@@ -47,7 +48,46 @@ export async function cloneRepo(repo:ParsedGithubUrl,cloneImpl:CloneImplementati
   }catch(error){await removeTempDir(destination);throw error;}
 }
 
-export async function removeTempDir(directory:string):Promise<void>{await fs.rm(directory,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
+export async function removeTempDir(directory: string): Promise<void> {
+  try {
+    await fs.rm(directory, { recursive: true, force: true, maxRetries: 8, retryDelay: 250 });
+  } catch (error) {
+    // On Windows a freshly cloned or Docker-mounted folder can stay locked (EBUSY).
+    // A leftover temp folder must not turn a finished scan into a failed one.
+    logger.warn({ dir: basename(directory), msg: error instanceof Error ? error.message : String(error) }, 'temp-dir cleanup skipped');
+  }
+}
+
+/** Remove stale "devsentry-*" directories in os.tmpdir() older than 1 hour.
+ *  Best-effort: never throws, logs how many were removed. */
+export async function sweepStaleTempDirs(olderThanMs = 60 * 60 * 1000): Promise<void> {
+  try {
+    const tmp = tmpdir();
+    const entries = await fs.readdir(tmp, { withFileTypes: true });
+    const now = Date.now();
+    let removed = 0;
+    const deadline = Date.now() + 4000; // budget: 4 s max
+
+    for (const entry of entries) {
+      if (Date.now() > deadline) break;
+      if (!entry.isDirectory() || !entry.name.startsWith('devsentry-')) continue;
+      try {
+        const stat = await fs.stat(join(tmp, entry.name));
+        if (now - stat.mtimeMs < olderThanMs) continue;
+        await fs.rm(join(tmp, entry.name), { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        removed++;
+      } catch {
+        // ignore individual failures
+      }
+    }
+
+    if (removed > 0) {
+      logger.info({ removed }, 'swept stale devsentry temp directories');
+    }
+  } catch {
+    // best-effort: never throw
+  }
+}
 
 export async function withClonedRepo<T>(repo:ParsedGithubUrl,work:(directory:string)=>Promise<T>,cloneImpl?:CloneImplementation,timeoutMs=env.SCAN_TIMEOUT_MS):Promise<T>{
   const directory=await cloneRepo(repo,cloneImpl,timeoutMs);

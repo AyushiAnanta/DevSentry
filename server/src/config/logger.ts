@@ -1,0 +1,8 @@
+import pino from 'pino';
+
+export const logger = pino({
+  redact: {
+    paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'],
+    censor: '[Redacted]',
+  },
+});
