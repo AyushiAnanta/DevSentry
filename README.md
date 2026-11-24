@@ -234,16 +234,39 @@ Full interactive docs are available at `/api/docs` (Swagger).
 | POST | `/api/quick-scan` | Analyze a pasted snippet |
 
 ## Testing
+
+### 1. Backend Unit Tests (Jest)
+Run unit tests for risk scoring algorithms, AI prompt integration, metric extraction, and static analysis parsing:
 ```bash
-cd server && npm test      # Jest + Supertest
-cd client && npm test      # component tests
+cd server
+npm test
+```
+
+### 2. Frontend Component & Unit Tests (Vitest)
+Run React component tests for routing, forms, scan polling, and the Quick Scan playground:
+```bash
+cd client
+npm test
+```
+
+### 3. End-to-End Browser Tests (Selenium + Pytest)
+Automated UI testing against Google Chrome and Microsoft Edge:
+```bash
+# Ensure client is built and running (or use automated runner)
+cd client && npm run build
+python tests/selenium/run_selenium.py
+
+# Alternatively, run directly with pytest:
+pytest tests/selenium -v
+pytest tests/selenium -v --headed    # Run with visible browser window
+pytest tests/selenium -v --browser edge # Run using Edge
 ```
 
 ## DevOps Roadmap
 
 - [ ] Jira board with sprints and linked issues
 - [ ] Git/GitHub workflow (feature branches, pull requests, reviews)
-- [ ] Unit tests (Jest) and Selenium end-to-end tests
+- [x] Unit tests (Jest) and Selenium end-to-end tests
 - [ ] Jenkins CI pipeline (install, lint, test, build, Docker image)
 - [ ] Dockerfiles and docker-compose
 - [ ] Kubernetes manifests
