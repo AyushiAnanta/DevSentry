@@ -1,2 +1,9 @@
-export { getMe,logout } from '../../api/auth';
-export type { User } from '../../api/auth';
+export {
+  forgotPassword,
+  getMe,
+  loginWithEmail,
+  logout,
+  registerWithEmail,
+  resetPassword,
+} from '../../api/auth';
+export type { AuthActionResponse, User } from '../../api/auth';
