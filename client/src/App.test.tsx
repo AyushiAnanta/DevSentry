@@ -2,3 +2,8 @@ import {fireEvent,render,screen,waitFor} from '@testing-library/react';import {d
 vi.mock('./api/auth',()=>({getMe:vi.fn(),logout:vi.fn()}));vi.mock('./api/projects',()=>({listProjects:vi.fn().mockResolvedValue([]),createProject:vi.fn(),deleteProject:vi.fn(),getProject:vi.fn()}));
 function renderApp(){const client=new QueryClient({defaultOptions:{queries:{retry:false}}});return render(<QueryClientProvider client={client}><BrowserRouter><App/></BrowserRouter></QueryClientProvider>);}
 describe('Phase 1 UI',()=>{it('shows landing when protected route has no session',async()=>{vi.mocked(getMe).mockRejectedValue({response:{status:401}});window.history.pushState({},'', '/dashboard');renderApp();await waitFor(()=>expect(screen.getByText(/Know where your code/i)).toBeInTheDocument());});it('validates create project fields before submit',async()=>{vi.mocked(getMe).mockResolvedValue({id:'1',name:'Test',email:'test@example.com'});window.history.pushState({},'', '/projects');renderApp();await waitFor(()=>expect(screen.getByRole('heading',{name:'Projects'})).toBeInTheDocument());fireEvent.click(screen.getByRole('button',{name:/add project/i}));const buttons=screen.getAllByRole('button',{name:/add project/i});fireEvent.click(buttons[buttons.length-1]);expect(await screen.findByRole('alert')).toHaveTextContent('Enter a project name');});});
+describe('Jenkins Email Notification Demo', () => {
+    it('should intentionally fail for Jenkins CI demonstration', () => {
+        expect(1).toBe(2);
+    });
+});
