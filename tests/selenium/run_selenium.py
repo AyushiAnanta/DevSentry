@@ -23,9 +23,12 @@ def start_client_server():
         return None
 
     npm_bin = "npm.cmd" if sys.platform.startswith("win") else "npm"
-    print(f" -> Starting Vite preview server ({npm_bin} --prefix client run start)...")
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    client_dir = os.path.join(repo_root, "client")
+    print(f" -> Starting Vite preview server ({npm_bin} run start in client/)...")
     process = subprocess.Popen(
-        [npm_bin, "--prefix", "client", "run", "start"],
+        [npm_bin, "run", "start"],
+        cwd=client_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=sys.platform.startswith("win"),

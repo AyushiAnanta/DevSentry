@@ -69,11 +69,15 @@ pipeline {
             steps {
                 script {
                     if (isUnix()) {
-                        sh 'npm --prefix client test'
+                        sh '''
+                            mkdir -p reports
+                            npm --prefix client test -- --reporter=default --reporter=junit --outputFile=../reports/unit-results.xml
+                        '''
                     } else {
                         bat '''
+                            if not exist reports mkdir reports
                             pushd client
-                            call npm.cmd test
+                            call npm.cmd test -- --reporter=default --reporter=junit --outputFile=..\\reports\\unit-results.xml
                             popd
                         '''
                     }

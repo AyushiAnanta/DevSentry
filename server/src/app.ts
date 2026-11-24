@@ -44,6 +44,7 @@ const swaggerSpec = swaggerJsdoc({
   apis: [`${__dirname}/routes/*.js`, `${__dirname}/routes/*.ts`],
 });
 
+app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', apiRouter);
 app.use((_req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }));
