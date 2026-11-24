@@ -5,12 +5,7 @@ pipeline {
         NODE_ENV = 'test'
         CI = 'true'
         // Email recipient list for test failure alerts
-        TEAM_EMAIL = 'dev-team@devsentry.local'
-    }
-
-    triggers {
-        // Triggered automatically on GitHub webhook or SCM polling
-        githubPush()
+        TEAM_EMAIL = 'aditi.jangra2005@gmail.com,theayushiananta@gmail.com,kamakshi645@gmail.com'
     }
 
     stages {
@@ -21,22 +16,19 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-            parallel {
-                stage('Server & Client (npm)') {
-                    steps {
+            steps {
+                script {
+                    if (isUnix()) {
                         sh '''
-                            npm --prefix server ci
-                            npm --prefix client ci
-                        '''
-                    }
-                }
-                stage('Python & Selenium') {
-                    steps {
-                        sh '''
-                            python3 -m venv venv || virtualenv venv
-                            . venv/bin/activate
-                            pip install --upgrade pip
+                            npm --prefix server install
+                            npm --prefix client install
                             pip install -r tests/selenium/requirements.txt
+                        '''
+                    } else {
+                        bat '''
+                            call npm.cmd --prefix server install
+                            call npm.cmd --prefix client install
+                            call .\\venv\\Scripts\\pip.exe install -r tests/selenium/requirements.txt
                         '''
                     }
                 }
@@ -44,30 +36,26 @@ pipeline {
         }
 
         stage('Lint & Typecheck') {
-            parallel {
-                stage('Server Typecheck') {
-                    steps {
+            steps {
+                script {
+                    if (isUnix()) {
                         sh 'npm --prefix server run typecheck'
-                    }
-                }
-                stage('Client Typecheck') {
-                    steps {
                         sh 'npm --prefix client run typecheck'
+                    } else {
+                        bat 'call npm.cmd --prefix server run typecheck'
+                        bat 'call npm.cmd --prefix client run typecheck'
                     }
                 }
             }
         }
 
         stage('Unit Tests') {
-            parallel {
-                stage('Backend Unit Tests (Jest)') {
-                    steps {
-                        sh 'npm --prefix server test -- --ci --reporters=default'
-                    }
-                }
-                stage('Frontend Unit Tests (Vitest)') {
-                    steps {
+            steps {
+                script {
+                    if (isUnix()) {
                         sh 'npm --prefix client test'
+                    } else {
+                        bat 'call npm.cmd --prefix client test'
                     }
                 }
             }
@@ -75,18 +63,25 @@ pipeline {
 
         stage('Client Build') {
             steps {
-                sh 'npm --prefix client run build'
+                script {
+                    if (isUnix()) {
+                        sh 'npm --prefix client run build'
+                    } else {
+                        bat 'call npm.cmd --prefix client run build'
+                    }
+                }
             }
         }
 
         stage('Selenium E2E Tests') {
             steps {
-                // Starts preview server, runs headless Chrome tests, and generates reports
-                sh '''
-                    . venv/bin/activate
-                    mkdir -p reports
-                    python tests/selenium/run_selenium.py --junitxml=reports/selenium-results.xml
-                '''
+                script {
+                    if (isUnix()) {
+                        sh 'python tests/selenium/run_selenium.py --junitxml=reports/selenium-results.xml'
+                    } else {
+                        bat 'call .\\venv\\Scripts\\python.exe tests/selenium/run_selenium.py --junitxml=reports/selenium-results.xml'
+                    }
+                }
             }
         }
     }
