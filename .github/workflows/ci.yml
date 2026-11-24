@@ -1,0 +1,53 @@
+name: DevSentry CI
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          npm --prefix server ci
+          npm --prefix client ci
+          pip install -r tests/selenium/requirements.txt
+
+      - name: Run Client Unit Tests (Vitest)
+        run: npm --prefix client test
+
+      - name: Build Client
+        run: npm --prefix client run build
+
+      - name: Run Selenium E2E Tests (Headless)
+        run: python tests/selenium/run_selenium.py
+
+      - name: Send Email on Failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "🚨 [DevSentry CI] GitHub Actions Build Failed"
+          to: aditi.jangra2005@gmail.com,theayushiananta@gmail.com,kamakshi645@gmail.com
+          from: DevSentry CI
+          body: "Tests failed on branch ${{ github.ref }}! Commit: ${{ github.sha }}"

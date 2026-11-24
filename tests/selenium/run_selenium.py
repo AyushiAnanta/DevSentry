@@ -22,13 +22,13 @@ def start_client_server():
         print(" -> Client is already running on http://127.0.0.1:5173.")
         return None
 
-    print(" -> Starting Vite preview server (npm.cmd --prefix client run start)...")
-    # Using npm.cmd run start (vite preview --host 0.0.0.0)
+    npm_bin = "npm.cmd" if sys.platform.startswith("win") else "npm"
+    print(f" -> Starting Vite preview server ({npm_bin} --prefix client run start)...")
     process = subprocess.Popen(
-        ["npm.cmd", "--prefix", "client", "run", "start"],
+        [npm_bin, "--prefix", "client", "run", "start"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        shell=True,
+        shell=sys.platform.startswith("win"),
     )
 
     # Wait up to 15 seconds for port 5173 to become available
