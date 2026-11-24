@@ -22,13 +22,19 @@ pipeline {
                         sh '''
                             npm --prefix server install
                             npm --prefix client install
+                            python3 -m venv venv || virtualenv venv
+                            . venv/bin/activate
                             pip install -r tests/selenium/requirements.txt
                         '''
                     } else {
                         bat '''
-                            call npm.cmd --prefix server install
-                            call npm.cmd --prefix client install
-                            call .\\venv\\Scripts\\pip.exe install -r tests/selenium/requirements.txt
+                            call npm.cmd --prefix server install --no-audit --no-fund
+                            call npm.cmd --prefix client install --no-audit --no-fund
+                            if not exist venv (
+                                python -m venv venv
+                            )
+                            call .\\venv\\Scripts\\python.exe -m pip install --upgrade pip
+                            call .\\venv\\Scripts\\python.exe -m pip install -r tests\\selenium\\requirements.txt
                         '''
                     }
                 }

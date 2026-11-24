@@ -43,6 +43,7 @@ def start_client_server():
 
 def run_tests(args):
     print("\n[2/3] Running Selenium E2E Tests via pytest...")
+    os.makedirs("reports", exist_ok=True)
     test_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = [
         sys.executable,
