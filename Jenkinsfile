@@ -48,8 +48,8 @@ pipeline {
                         sh 'npm --prefix server run typecheck'
                         sh 'npm --prefix client run typecheck'
                     } else {
-                        bat 'call npm.cmd --prefix server run typecheck'
-                        bat 'call npm.cmd --prefix client run typecheck'
+                        bat 'call server\\node_modules\\.bin\\tsc.cmd --noEmit -p server\\tsconfig.json'
+                        bat 'call client\\node_modules\\.bin\\tsc.cmd --noEmit -p client\\tsconfig.app.json'
                     }
                 }
             }
