@@ -28,8 +28,12 @@ pipeline {
                         '''
                     } else {
                         bat '''
-                            call npm.cmd --prefix server install --no-audit --no-fund
-                            call npm.cmd --prefix client install --no-audit --no-fund
+                            pushd server
+                            call npm.cmd install --no-audit --no-fund
+                            popd
+                            pushd client
+                            call npm.cmd install --no-audit --no-fund
+                            popd
                             if not exist venv (
                                 python -m venv venv
                             )
@@ -48,8 +52,14 @@ pipeline {
                         sh 'npm --prefix server run typecheck'
                         sh 'npm --prefix client run typecheck'
                     } else {
-                        bat 'call npm.cmd --prefix server run typecheck'
-                        bat 'call npm.cmd --prefix client run typecheck'
+                        bat '''
+                            pushd server
+                            call node_modules\\.bin\\tsc.cmd --noEmit
+                            popd
+                            pushd client
+                            call node_modules\\.bin\\tsc.cmd --noEmit -p tsconfig.app.json
+                            popd
+                        '''
                     }
                 }
             }
@@ -61,7 +71,11 @@ pipeline {
                     if (isUnix()) {
                         sh 'npm --prefix client test'
                     } else {
-                        bat 'call npm.cmd --prefix client test'
+                        bat '''
+                            pushd client
+                            call npm.cmd test
+                            popd
+                        '''
                     }
                 }
             }
@@ -73,7 +87,11 @@ pipeline {
                     if (isUnix()) {
                         sh 'npm --prefix client run build'
                     } else {
-                        bat 'call npm.cmd --prefix client run build'
+                        bat '''
+                            pushd client
+                            call npm.cmd run build
+                            popd
+                        '''
                     }
                 }
             }
@@ -85,7 +103,7 @@ pipeline {
                     if (isUnix()) {
                         sh 'python tests/selenium/run_selenium.py --junitxml=reports/selenium-results.xml'
                     } else {
-                        bat 'call .\\venv\\Scripts\\python.exe tests/selenium/run_selenium.py --junitxml=reports/selenium-results.xml'
+                        bat 'call .\\venv\\Scripts\\python.exe tests\\selenium\\run_selenium.py --junitxml=reports\\selenium-results.xml'
                     }
                 }
             }
