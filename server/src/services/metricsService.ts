@@ -1,8 +1,7 @@
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { isAbsolute,relative,sep } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { env } from '../config/env';
-const execFileAsync=promisify(execFile);
 export interface LizardFunction {filePath:string;name:string;nloc:number;ccn:number;parameterCount:number;startLine:number;endLine:number;length:number}
 export interface LizardFileMetrics {filePath:string;nloc:number;maxCcn:number;avgCcn:number;functionCount:number;maxParams:number;longestFunctionLength:number;functions:LizardFunction[]}
 export interface LizardFinding {filePath:string;line:number;endLine:number;ruleId:string;source:'lizard';severity:'medium'|'high';category:'complexity';message:string;functionName:string}
@@ -14,4 +13,17 @@ export function parseLizardCsv(csv:string,root:string):CsvFunction[]{return pars
 export function parseLizardXmlFiles(xml:string,root:string):Map<string,number>{const result=new Map<string,number>();const section=xml.match(/<measure type="File">([\s\S]*?)<\/measure>/)?.[1]??'';const item=/<item name="([^"]+)">([\s\S]*?)<\/item>/g;for(const match of section.matchAll(item)){const name=(match[1]??'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');const values=[...match[2].matchAll(/<value>([^<]*)<\/value>/g)].map(value=>toNumber(value[1]));if(name&&values.length>=2)result.set(relativePath(name,root),values[1]??0);}return result;}
 export function aggregateLizardMetrics(functions:CsvFunction[],fileNloc:Map<string,number>):LizardFileMetrics[]{const byFile=new Map<string,CsvFunction[]>();for(const fn of functions){const group=byFile.get(fn.filePath)??[];group.push(fn);byFile.set(fn.filePath,group);}return [...byFile.entries()].map(([filePath,records])=>{const ccns=records.map(record=>record.ccn);return{filePath,nloc:fileNloc.get(filePath)??records.reduce((sum,record)=>sum+record.nloc,0),maxCcn:Math.max(0,...ccns),avgCcn:ccns.length?ccns.reduce((sum,value)=>sum+value,0)/ccns.length:0,functionCount:records.length,maxParams:Math.max(0,...records.map(record=>record.parameterCount)),longestFunctionLength:Math.max(0,...records.map(record=>record.length)),functions:records};});}
 export function findingsFromLizard(metrics:LizardFileMetrics[]):LizardFinding[]{return metrics.flatMap(file=>file.functions.filter(fn=>fn.ccn>15).map(fn=>({filePath:file.filePath,line:fn.startLine,endLine:fn.endLine,ruleId:'lizard.high-complexity',source:'lizard' as const,severity:fn.ccn>30?'high' as const:'medium' as const,category:'complexity' as const,message:`${fn.name} has cyclomatic complexity ${fn.ccn}.`,functionName:fn.name})));}
-export async function runLizard(files:string[],root:string,options:{binary?:string;timeoutMs?:number;maxBuffer?:number}={}):Promise<LizardFileMetrics[]>{if(files.length===0)return[];const binary=options.binary??env.LIZARD_BIN;const timeout=options.timeoutMs??env.SCAN_TIMEOUT_MS;const maxBuffer=options.maxBuffer??20*1024*1024;const run=async(args:string[])=>{const command=binary.toLowerCase().endsWith('.py')?'python':binary;const argv=command===binary?args:[binary,...args];return execFileAsync(command,argv,{cwd:root,timeout,maxBuffer,windowsHide:true,encoding:'utf8'});};const [csv,xml]=await Promise.all([run(['--csv',...files]),run(['-X',...files])]);return aggregateLizardMetrics(parseLizardCsv(csv.stdout,root),parseLizardXmlFiles(xml.stdout,root));}
+// Lizard exit codes: 0 = success, 1 = threshold exceeded (stdout still valid).
+// We capture stdout regardless of exit code 0 or 1 to avoid discarding valid output.
+function runLizardCommand(command:string,argv:string[],opts:{cwd:string;timeout:number;maxBuffer:number}):Promise<{stdout:string;stderr:string}>{
+  return new Promise((resolve,reject)=>{
+    execFile(command,argv,{cwd:opts.cwd,timeout:opts.timeout,maxBuffer:opts.maxBuffer,windowsHide:true,encoding:'utf8'} as Parameters<typeof execFile>[2],(error,stdout,stderr)=>{
+      if(!error){resolve({stdout:stdout as string,stderr:stderr as string});return;}
+      const code=(error as {code?:unknown}).code;
+      // code 0 or 1 from lizard both contain usable stdout
+      if((code===0||code==='0'||code===1||code==='1')&&typeof stdout==='string'){resolve({stdout:stdout as string,stderr:stderr as string});return;}
+      reject(error);
+    });
+  });
+}
+export async function runLizard(files:string[],root:string,options:{binary?:string;timeoutMs?:number;maxBuffer?:number}={}):Promise<LizardFileMetrics[]>{if(files.length===0)return[];const binary=options.binary??env.LIZARD_BIN;const timeout=options.timeoutMs??env.SCAN_TIMEOUT_MS;const maxBuffer=options.maxBuffer??20*1024*1024;const run=(args:string[])=>{if(process.platform==='win32'&&/(?:^|[\\/])lizard\.exe$/i.test(binary)){const venvPython=join(dirname(binary),'python.exe');if(existsSync(venvPython)){return runLizardCommand(venvPython,['-m','lizard',...args],{cwd:root,timeout,maxBuffer});}}const command=binary.toLowerCase().endsWith('.py')?'python':binary;const argv=command===binary?args:[binary,...args];return runLizardCommand(command,argv,{cwd:root,timeout,maxBuffer});};const [csv,xml]=await Promise.all([run(['--csv',...files]),run(['-X',...files])]);return aggregateLizardMetrics(parseLizardCsv(csv.stdout,root),parseLizardXmlFiles(xml.stdout,root));}
