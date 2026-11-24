@@ -28,12 +28,8 @@ pipeline {
                         '''
                     } else {
                         bat '''
-                            pushd server
-                            call npm.cmd install --no-audit --no-fund
-                            popd
-                            pushd client
-                            call npm.cmd install --no-audit --no-fund
-                            popd
+                            call npm.cmd --prefix server install --no-audit --no-fund
+                            call npm.cmd --prefix client install --no-audit --no-fund
                             if not exist venv (
                                 python -m venv venv
                             )
@@ -52,14 +48,8 @@ pipeline {
                         sh 'npm --prefix server run typecheck'
                         sh 'npm --prefix client run typecheck'
                     } else {
-                        bat '''
-                            pushd server
-                            call node_modules\\.bin\\tsc.cmd --noEmit
-                            popd
-                            pushd client
-                            call node_modules\\.bin\\tsc.cmd --noEmit -p tsconfig.app.json
-                            popd
-                        '''
+                        bat 'call npm.cmd --prefix server run typecheck'
+                        bat 'call npm.cmd --prefix client run typecheck'
                     }
                 }
             }
@@ -71,11 +61,7 @@ pipeline {
                     if (isUnix()) {
                         sh 'npm --prefix client test'
                     } else {
-                        bat '''
-                            pushd client
-                            call npm.cmd test
-                            popd
-                        '''
+                        bat 'call npm.cmd --prefix client test'
                     }
                 }
             }
@@ -87,11 +73,7 @@ pipeline {
                     if (isUnix()) {
                         sh 'npm --prefix client run build'
                     } else {
-                        bat '''
-                            pushd client
-                            call npm.cmd run build
-                            popd
-                        '''
+                        bat 'call npm.cmd --prefix client run build'
                     }
                 }
             }
