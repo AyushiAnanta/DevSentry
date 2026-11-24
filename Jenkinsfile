@@ -5,7 +5,7 @@ pipeline {
         NODE_ENV = 'test'
         CI = 'true'
         // Email recipient list for test failure alerts
-        TEAM_EMAIL = 'aditi.jangra2005@gmail.com,theayushiananta@gmail.com,kamakshi645@gmail.com'
+        TEAM_EMAIL = 'aditi.jangra2005@gmail.com'
     }
 
     stages {
