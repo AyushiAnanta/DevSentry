@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
@@ -5,7 +6,9 @@ import { env } from '../config/env';
 import { categoryForRule, mapSemgrepSeverity } from './severityMap';
 
 const execFileAsync = promisify(execFile);
-const serverRoot = resolve(__dirname, '../..');
+const serverRoot = existsSync(resolve(__dirname, '../..', 'semgrep-rules'))
+  ? resolve(__dirname, '../..')
+  : resolve(__dirname, '../../..');
 const severityRank: Record<string, number> = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
 
 export interface SemgrepRunResult { rawJson: string; warnings: string[] }

@@ -2,6 +2,7 @@ import os
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
 def pytest_addoption(parser):
@@ -52,7 +53,17 @@ def driver(request):
         options.add_argument("--window-size=1280,800")
         # Ensure smooth headless rendering
         options.add_argument("--blink-settings=imagesEnabled=true")
-        driver_instance = webdriver.Chrome(options=options)
+        chrome_bin = os.environ.get("CHROME_BIN")
+        if chrome_bin:
+            options.binary_location = chrome_bin
+        chromedriver_path = os.environ.get("CHROMEDRIVER_PATH")
+        if chromedriver_path:
+            driver_instance = webdriver.Chrome(
+                service=ChromeService(executable_path=chromedriver_path),
+                options=options,
+            )
+        else:
+            driver_instance = webdriver.Chrome(options=options)
     
     driver_instance.implicitly_wait(5)
     

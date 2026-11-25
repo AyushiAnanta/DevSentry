@@ -190,6 +190,17 @@ cd client && npm install && npm run dev
 ```
 Frontend: http://localhost:5173 · API: http://localhost:5000 · Swagger: http://localhost:5000/api/docs
 
+### 7. Run with Docker Compose (optional)
+```bash
+docker compose up --build -d
+```
+This starts `mongo`, `server` (with Git, Python, Semgrep `1.185.0`, and Lizard), and `client` (Nginx serving the SPA and proxying `/api`).
+
+To run the Selenium E2E suite inside Docker against the running stack:
+```bash
+docker compose --profile test run --rm selenium
+```
+
 ## Environment Variables
 
 **server/.env**
@@ -268,7 +279,7 @@ pytest tests/selenium -v --browser edge # Run using Edge
 - [ ] Git/GitHub workflow (feature branches, pull requests, reviews)
 - [x] Unit tests (Jest) and Selenium end-to-end tests
 - [ ] Jenkins CI pipeline (install, lint, test, build, Docker image)
-- [ ] Dockerfiles and docker-compose
+- [x] Dockerfiles and docker-compose
 - [ ] Kubernetes manifests
 - [ ] GitHub webhooks (trigger Jenkins on push)
 - [ ] Postman collection

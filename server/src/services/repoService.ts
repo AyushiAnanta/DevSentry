@@ -12,7 +12,8 @@ export interface RepoWarningSink {warnings:string[]}
 export type CloneImplementation=(cloneUrl:string,destination:string,timeoutMs:number)=>Promise<void>;
 export const cloneWithSimpleGit:CloneImplementation=async(cloneUrl,destination,timeoutMs)=>{
   const git=simpleGit({baseDir:destination,timeout:{block:timeoutMs},allowConfig:['core.hooksPath'],allowEnvironment:['GIT_TERMINAL_PROMPT','GIT_LFS_SKIP_SMUDGE']}).env({GIT_TERMINAL_PROMPT:'0',GIT_LFS_SKIP_SMUDGE:'1'});
-  await git.raw(['-c','core.hooksPath=NUL','clone','--depth',String(env.CLONE_DEPTH),'--single-branch','--no-tags','--no-recurse-submodules',cloneUrl,'.']);
+  const nullHooksPath = process.platform === 'win32' ? 'NUL' : '/dev/null';
+  await git.raw(['-c',`core.hooksPath=${nullHooksPath}`,'clone','--depth',String(env.CLONE_DEPTH),'--single-branch','--no-tags','--no-recurse-submodules',cloneUrl,'.']);
 };
 
 export function parseGithubUrl(input:string):ParsedGithubUrl {
